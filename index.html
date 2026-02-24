@@ -216,41 +216,80 @@ function initGoogle(){
 }
 
 function uploadToDrive(){
+<script>
+
+async function uploadToDrive(){
 
   if(!accessToken){
     alert("Connect Google First");
     return;
   }
 
-  let metadata = {
-    name: "library_backup.json",
-    mimeType: "application/json"
-  };
+  const fileName = "library_backup.json";
 
-  let file = new Blob(
+  // Step 1: Check if file exists
+  let searchResponse = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'&spaces=drive`,
+    {
+      headers: {
+        Authorization: "Bearer " + accessToken
+      }
+    }
+  );
+
+  let searchData = await searchResponse.json();
+
+  let fileContent = new Blob(
     [JSON.stringify({books: books}, null, 2)],
     { type: "application/json" }
   );
 
-  let form = new FormData();
-  form.append("metadata", new Blob([JSON.stringify(metadata)], {type: "application/json"}));
-  form.append("file", file);
+  if(searchData.files && searchData.files.length > 0){
 
-  fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
-    method: "POST",
-    headers: new Headers({ "Authorization": "Bearer " + accessToken }),
-    body: form,
-  })
-  .then(res => res.json())
-  .then(data => {
-    alert("Backup Uploaded to Drive");
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Upload Failed");
-  });
+    // File exists → Update
+    let fileId = searchData.files[0].id;
+
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json"
+        },
+        body: fileContent
+      }
+    );
+
+    alert("Backup Updated Successfully");
+
+  } else {
+
+    // File doesn't exist → Create new
+    let metadata = {
+      name: fileName,
+      mimeType: "application/json"
+    };
+
+    let form = new FormData();
+    form.append("metadata", new Blob([JSON.stringify(metadata)], {type: "application/json"}));
+    form.append("file", fileContent);
+
+    await fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken
+        },
+        body: form
+      }
+    );
+
+    alert("Backup Created Successfully");
+  }
 }
 
-</script>
+  </script>
 </body>
 </html>
