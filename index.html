@@ -22,8 +22,8 @@ nav button.active{color:#e68a7c;}
 <body>
 
 <header>
-<h1>Welcome :)</h1>
-<p>Your personal reading dashboard</p>
+<h1>HI JATIN  :)</h1>
+<p>Your personal Library</p>
 </header>
 
 <div id="home" class="card">
@@ -33,9 +33,43 @@ nav button.active{color:#e68a7c;}
 
 <div id="add" class="card hidden">
 <h3>Add Book</h3>
+<!-- ✅ COVER FIRST -->
+<h4>Book Cover</h4>
+<input type="file" id="coverUpload" accept="image/*">
+<img id="coverPreview" style="margin-top:10px;width:120px;border-radius:12px;">
+
 <input type="text" id="title" placeholder="Title">
-<input type="text" id="author" placeholder="Author">
+
+<input list="authorList" id="author" placeholder="Author">
+<datalist id="authorList"></datalist>
+
+<input type="number" id="pages" placeholder="Pages">
+
+<input list="languageList" id="language" placeholder="Language">
+<datalist id="languageList"></datalist>
+
+<input list="publisherList" id="publisher" placeholder="Publisher">
+<datalist id="publisherList"></datalist>
+
+<select id="seriesOption" onchange="toggleSeries()">
+<option value="No">Is part of series? No</option>
+<option value="Yes">Yes</option>
+</select>
+
+<input list="seriesList" id="seriesName" placeholder="Series Name" class="hidden">
+<datalist id="seriesList"></datalist>
+
+<h4>Purchase Log</h4>
+
+<input type="date" id="purchaseDate">
+
+<input list="purchaseList" id="purchaseFrom" placeholder="Purchase From">
+<datalist id="purchaseList"></datalist>
+
+<input type="number" id="price" placeholder="Price">
+
 <button onclick="addBook()">Save Book</button>
+
 </div>
 
 <div id="library" class="card hidden">
@@ -243,3 +277,4 @@ async function restoreBackup(fileId){
 
 </body>
 </html>
+
