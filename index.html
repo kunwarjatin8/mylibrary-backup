@@ -227,8 +227,53 @@ await fetch(
 
 await loadBackups();
 }
+async function restoreBackup(fileId){
 
+if(!confirm("This will replace your current library. Continue?")) return;
+
+const res = await fetch(
+"https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",
+{ headers:{ Authorization:"Bearer "+accessToken } }
+);
+
+const data = await res.json();
+
+if(data.books && Array.isArray(data.books)){
+books = data.books;
+document.getElementById("totalCount").innerText = books.length;
+alert("Backup Restored Successfully");
+}else{
+alert("Invalid Backup File");
+}
+
+}
 </script>
+async function loadBackups(){
+const res = await fetch(
+"https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
+{ headers:{ Authorization:"Bearer "+accessToken } }
+);
 
+const data = await res.json();
+const list = document.getElementById("backupList");
+list.innerHTML="";
+
+if(!data.files || data.files.length===0){
+list.innerHTML="<p>No backups yet</p>";
+return;
+}
+
+data.files.forEach(file=>{
+list.innerHTML+=`
+<div style="margin:10px 0;padding:12px;background:#f1f1f1;border-radius:15px;">
+<strong>${file.name}</strong><br>
+${new Date(file.createdTime).toLocaleString()}<br>
+<button onclick="restoreBackup('${file.id}')">Restore</button>
+<button onclick="deleteBackup('${file.id}')">Delete</button>
+</div>
+`;
+});
+}
 </body>
 </html>
+
