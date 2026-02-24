@@ -97,79 +97,100 @@ nav button.active{color:#e68a7c;}
 <button onclick="showTab('library',this)">Library</button>
 <button onclick="showTab('myzone',this)">My Zone</button>
 </nav>
-
 <script>
+
 let books = [];
-
-function showTab(id,btn)
-<script>
-function displayBooks(){}
-
 let currentBookId = null;
 
-function openBook(id){}
-
-function closeModal(){}
-
-function deleteBook(){}
-
-function editBook(){}
-
-function addBook(){}
-
-displayBooks();
-
-</script>
-  {
+function showTab(id,btn){
   document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
+
 function displayBooks(){
-let list = document.getElementById("bookList");
-if(!list) return;
+  let list = document.getElementById("bookList");
+  if(!list) return;
 
-list.innerHTML = "";
+  list.innerHTML = "";
 
-books.forEach(b=>{
-list.innerHTML += `
-<div onclick="openBook('${b.id}')" 
-style="margin:10px 0;padding:10px;background:white;border-radius:15px;cursor:pointer;">
-<strong>${b.title}</strong><br>
-${b.author}
-</div>`;
-});
+  books.forEach(function(b){
+    list.innerHTML += 
+      "<div onclick=\"openBook('" + b.id + "')\" " +
+      "style=\"margin:10px 0;padding:10px;background:white;border-radius:15px;cursor:pointer;\">" +
+      "<strong>" + b.title + "</strong><br>" +
+      b.author +
+      "</div>";
+  });
 }
+
 function addBook(){
-  let book={
-    id:Date.now().toString(),
-    title:title.value.trim(),
-    author:author.value.trim()
+  let book = {
+    id: Date.now().toString(),
+    title: title.value.trim(),
+    author: author.value.trim()
   };
 
-  if(!book.title||!book.author){
+  if(!book.title || !book.author){
     alert("Title & Author required");
     return;
   }
 
   books.push(book);
   displayBooks();
-  let currentBookId = null;
 
-function openBook(id){
-const book = books.find(b=>b.id===id);
-if(!book) return;
-
-currentBookId = id;
-
-alert("Title: " + book.title + "\nAuthor: " + book.author);
-}
   document.getElementById("totalCount").innerText = books.length;
-  title.value="";
-  author.value="";
+
+  title.value = "";
+  author.value = "";
+
   alert("Book Added");
 }
+
+function openBook(id){
+  const book = books.find(function(b){ return b.id === id; });
+  if(!book) return;
+
+  currentBookId = id;
+
+  document.getElementById("modalTitle").innerText = book.title;
+  document.getElementById("modalAuthor").innerText = "Author: " + book.author;
+  document.getElementById("bookModal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("bookModal").style.display = "none";
+}
+
+function deleteBook(){
+  if(!confirm("Delete this book?")) return;
+
+  books = books.filter(function(b){
+    return b.id !== currentBookId;
+  });
+
+  displayBooks();
+  document.getElementById("totalCount").innerText = books.length;
+  closeModal();
+}
+
+function editBook(){
+  const book = books.find(function(b){
+    return b.id === currentBookId;
+  });
+
+  if(!book) return;
+
+  title.value = book.title;
+  author.value = book.author;
+
+  closeModal();
+  showTab('add', document.querySelectorAll('nav button')[1]);
+}
+
+displayBooks();
+
 </script>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -334,6 +355,7 @@ async function restoreBackup(fileId){
 </div>
 </body>
 </html>
+
 
 
 
