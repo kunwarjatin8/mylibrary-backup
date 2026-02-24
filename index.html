@@ -3,6 +3,23 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advanced Library</title>
+  <div id="library" class="card hidden">
+<h3>Backup & Restore</h3>
+
+<button id="connectBtn" onclick="initGoogle()">Connect Google</button>
+
+<div id="profileBox" style="display:none;margin-top:10px;">
+  <button onclick="toggleProfile()">My Profile</button>
+  <div id="profilePopup" style="display:none;background:#f1f1f1;padding:10px;border-radius:10px;margin-top:5px;">
+    <p id="profileEmail"></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<button onclick="createBackup()">Make a Backup</button>
+
+<div id="backupList" style="margin-top:15px;"></div>
+</div>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
@@ -229,3 +246,4 @@ async function deleteBackup(id){
 
 </body>
 </html>
+
