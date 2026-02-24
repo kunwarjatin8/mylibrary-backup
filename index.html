@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:linear-gradient(135deg,#f4b183,#e68a7c);min-height:100vh;padding-bottom:80px;overflow-x:hidden;}
+header{padding:30px 20px 60px;color:white;}
+.card{background:rgba(255,255,255,0.95);margin:-40px 15px 15px;padding:20px;border-radius:25px;box-shadow:0 15px 30px rgba(0,0,0,0.15);}
+input,select{width:100%;padding:10px;margin:6px 0;border:none;border-radius:12px;background:#f1f1f1;}
+button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:15px;background:#4e8da5;color:white;font-weight:600;cursor:pointer;}
+nav{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);width:90%;background:white;border-radius:30px;display:flex;justify-content:space-around;padding:12px 0;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+nav button{background:none;color:#333;}
+nav button.active{color:#e68a7c;}
+.hidden{display:none;}
+.best{color:#4e8da5;font-size:12px;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Welcome :)</h1>
+<p>Your personal reading dashboard</p>
+</header>
+
+<!-- HOME -->
+<div id="home" class="card">
+<h3>Currently Reading</h3>
+<p>Total Books: <span id="totalCount">0</span></p>
+</div>
+
+<!-- ADD -->
+<div id="add" class="card hidden">
+
+<h3>Add Book</h3>
+
+<h4>Book Cover</h4>
+<input type="file" id="coverUpload" accept="image/*">
+<img id="coverPreview" style="margin-top:10px;width:120px;border-radius:12px;">
+
+<input type="text" id="title" placeholder="Title">
+<input type="text" id="author" placeholder="Author">
+<input type="number" id="pages" placeholder="Pages">
+<input type="text" id="language" placeholder="Language">
+<input type="text" id="publisher" placeholder="Publisher">
+
+<select id="seriesOption" onchange="toggleSeries()">
+<option value="No">Is part of series? No</option>
+<option value="Yes">Yes</option>
+</select>
+
+<input type="text" id="seriesName" placeholder="Series Name" class="hidden">
+
+<h4>Purchase Log</h4>
+<input type="date" id="purchaseDate">
+<input type="text" id="purchaseFrom" placeholder="Purchase From">
+<input type="number" id="price" placeholder="Price">
+
+<button onclick="addBook()">Save Book</button>
+
+</div>
+
+<!-- LIBRARY -->
+<div id="library" class="card hidden">
+<h3>My Library</h3>
+
+<button onclick="initGoogle()">Connect Google</button>
+<button onclick="uploadToDrive()">Backup to Drive</button>
+<input type="file" id="importFile" hidden onchange="importData(event)">
+
+<div id="bookList"></div>
+</div>
+
+<nav>
+<button onclick="showTab('home',this)" class="active">Home</button>
+<button onclick="showTab('add',this)">Add</button>
+<button onclick="showTab('library',this)">Library</button>
+</nav>
+
+<script>
+
+let books = [];
+
+function showTab(id,btn){
+document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+document.getElementById(id).classList.remove('hidden');
+document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+btn.classList.add('active');
+}
+
+function toggleSeries(){
+document.getElementById("seriesName")
+.classList.toggle("hidden",
+document.getElementById("seriesOption").value==="No");
+}
+
+document.getElementById("coverUpload")
+.addEventListener("change",function(e){
+let reader=new FileReader();
+reader.onload=function(){
+document.getElementById("coverPreview").src=reader.result;
+};
+if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+});
+
+function addBook(){
+
+let book={
+id: Date.now().toString(),
+title:title.value.trim(),
+author:author.value.trim(),
+pages: pages.value ? Number(pages.value) : null,
+language:language.value.trim(),
+publisher:publisher.value.trim(),
+series:seriesOption.value==="Yes"?seriesName.value.trim():"",
+purchase:{
+date:purchaseDate.value || null,
+from:purchaseFrom.value.trim(),
+price: price.value ? Number(price.value) : null
+},
+cover:coverPreview.src || null
+};
+
+if(!book.title||!book.author){
+alert("Title & Author required");
+return;
+}
+
+books.push(book);
+displayBooks();
+updateCount();
+clearForm();
+alert("Book Added");
+}
+
+function displayBooks(){
+let list=document.getElementById("bookList");
+list.innerHTML="";
+books.forEach(b=>{
+list.innerHTML+=`
+<div style="margin:10px 0;padding:10px;background:white;border-radius:15px;">
+<strong>${b.title}</strong><br>
+${b.author}<br>
+${b.purchase.date ? "Purchased: "+b.purchase.date : ""}
+</div>`;
+});
+}
+
+function updateCount(){
+document.getElementById("totalCount").innerText = books.length;
+}
+
+function clearForm(){
+document.querySelectorAll("#add input").forEach(i=>{
+if(i.type!=="file") i.value="";
+});
+coverPreview.src="";
+seriesName.classList.add("hidden");
+}
+
+function exportData(){
+let dataStr = JSON.stringify({books:books}, null, 2);
+let blob = new Blob([dataStr], {type:"application/json"});
+let url = URL.createObjectURL(blob);
+let a = document.createElement("a");
+a.href = url;
+a.download = "library_backup.json";
+a.click();
+URL.revokeObjectURL(url);
+}
+
+function importData(event){
+let file = event.target.files[0];
+if(!file) return;
+let reader = new FileReader();
+reader.onload = function(e){
+try{
+let parsed = JSON.parse(e.target.result);
+if(parsed.books && Array.isArray(parsed.books)){
+books = parsed.books;
+displayBooks();
+updateCount();
+alert("Backup Restored Successfully");
+}else{
+alert("Invalid Backup File");
+}
+}catch{
+alert("Corrupted File");
+}
+};
+reader.readAsText(file);
+}
+
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+
+const CLIENT_ID = "813786394900-v0362a01ak5hsnq4ohuauk55kll5pu0i.apps.googleusercontent.com";
+
+let accessToken = null;
+
+function initGoogle(){
+  google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    callback: (tokenResponse) => {
+      accessToken = tokenResponse.access_token;
+      alert("Google Connected");
+    },
+  }).requestAccessToken();
+}
+
+function uploadToDrive(){
+
+  if(!accessToken){
+    alert("Connect Google First");
+    return;
+  }
+
+  let metadata = {
+    name: "library_backup.json",
+    mimeType: "application/json"
+  };
+
+  let file = new Blob(
+    [JSON.stringify({books: books}, null, 2)],
+    { type: "application/json" }
+  );
+
+  let form = new FormData();
+  form.append("metadata", new Blob([JSON.stringify(metadata)], {type: "application/json"}));
+  form.append("file", file);
+
+  fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+    method: "POST",
+    headers: new Headers({ "Authorization": "Bearer " + accessToken }),
+    body: form,
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Backup Uploaded to Drive");
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Upload Failed");
+  });
+}
+
+</script>
+</body>
+</html>
