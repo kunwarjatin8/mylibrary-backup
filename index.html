@@ -7,7 +7,7 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-body{background:linear-gradient(135deg,#f4b183,#e68a7c);min-height:100vh;padding-bottom:80px;overflow-x:hidden;}
+body{background:linear-gradient(135deg,#f4b183,#e68a7c);min-height:100vh;padding-bottom:80px;}
 header{padding:30px 20px 60px;color:white;}
 .card{background:rgba(255,255,255,0.95);margin:-40px 15px 15px;padding:20px;border-radius:25px;box-shadow:0 15px 30px rgba(0,0,0,0.15);}
 input,select{width:100%;padding:10px;margin:6px 0;border:none;border-radius:12px;background:#f1f1f1;}
@@ -16,7 +16,6 @@ nav{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);width:90%;bac
 nav button{background:none;color:#333;}
 nav button.active{color:#e68a7c;}
 .hidden{display:none;}
-.best{color:#4e8da5;font-size:12px;}
 </style>
 </head>
 
@@ -27,50 +26,36 @@ nav button.active{color:#e68a7c;}
 <p>Your personal reading dashboard</p>
 </header>
 
-<!-- HOME -->
 <div id="home" class="card">
 <h3>Currently Reading</h3>
 <p>Total Books: <span id="totalCount">0</span></p>
 </div>
 
-<!-- ADD -->
 <div id="add" class="card hidden">
-
 <h3>Add Book</h3>
-
-<h4>Book Cover</h4>
-<input type="file" id="coverUpload" accept="image/*">
-<img id="coverPreview" style="margin-top:10px;width:120px;border-radius:12px;">
 
 <input type="text" id="title" placeholder="Title">
 <input type="text" id="author" placeholder="Author">
-<input type="number" id="pages" placeholder="Pages">
-<input type="text" id="language" placeholder="Language">
-<input type="text" id="publisher" placeholder="Publisher">
-
-<select id="seriesOption" onchange="toggleSeries()">
-<option value="No">Is part of series? No</option>
-<option value="Yes">Yes</option>
-</select>
-
-<input type="text" id="seriesName" placeholder="Series Name" class="hidden">
-
-<h4>Purchase Log</h4>
-<input type="date" id="purchaseDate">
-<input type="text" id="purchaseFrom" placeholder="Purchase From">
-<input type="number" id="price" placeholder="Price">
 
 <button onclick="addBook()">Save Book</button>
-
 </div>
 
-<!-- LIBRARY -->
 <div id="library" class="card hidden">
-<h3>My Library</h3>
+<h3>Backup & Restore</h3>
 
-<button onclick="initGoogle()">Connect Google</button>
-<button onclick="uploadToDrive()">Backup to Drive</button>
-<input type="file" id="importFile" hidden onchange="importData(event)">
+<button id="connectBtn" onclick="initGoogle()">Connect Google</button>
+
+<div id="profileBox" style="display:none;margin-top:10px;">
+  <button onclick="toggleProfile()">My Profile</button>
+  <div id="profilePopup" style="display:none;background:#f1f1f1;padding:10px;border-radius:10px;margin-top:5px;">
+    <p id="profileEmail"></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<button onclick="createBackup()">Make a Backup</button>
+
+<div id="backupList" style="margin-top:15px;"></div>
 
 <div id="bookList"></div>
 </div>
@@ -92,37 +77,11 @@ document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'))
 btn.classList.add('active');
 }
 
-function toggleSeries(){
-document.getElementById("seriesName")
-.classList.toggle("hidden",
-document.getElementById("seriesOption").value==="No");
-}
-
-document.getElementById("coverUpload")
-.addEventListener("change",function(e){
-let reader=new FileReader();
-reader.onload=function(){
-document.getElementById("coverPreview").src=reader.result;
-};
-if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
-});
-
 function addBook(){
-
 let book={
-id: Date.now().toString(),
+id:Date.now().toString(),
 title:title.value.trim(),
-author:author.value.trim(),
-pages: pages.value ? Number(pages.value) : null,
-language:language.value.trim(),
-publisher:publisher.value.trim(),
-series:seriesOption.value==="Yes"?seriesName.value.trim():"",
-purchase:{
-date:purchaseDate.value || null,
-from:purchaseFrom.value.trim(),
-price: price.value ? Number(price.value) : null
-},
-cover:coverPreview.src || null
+author:author.value.trim()
 };
 
 if(!book.title||!book.author){
@@ -131,165 +90,142 @@ return;
 }
 
 books.push(book);
-displayBooks();
 updateCount();
-clearForm();
 alert("Book Added");
-}
-
-function displayBooks(){
-let list=document.getElementById("bookList");
-list.innerHTML="";
-books.forEach(b=>{
-list.innerHTML+=`
-<div style="margin:10px 0;padding:10px;background:white;border-radius:15px;">
-<strong>${b.title}</strong><br>
-${b.author}<br>
-${b.purchase.date ? "Purchased: "+b.purchase.date : ""}
-</div>`;
-});
+title.value="";
+author.value="";
 }
 
 function updateCount(){
 document.getElementById("totalCount").innerText = books.length;
 }
 
-function clearForm(){
-document.querySelectorAll("#add input").forEach(i=>{
-if(i.type!=="file") i.value="";
-});
-coverPreview.src="";
-seriesName.classList.add("hidden");
-}
-
-function exportData(){
-let dataStr = JSON.stringify({books:books}, null, 2);
-let blob = new Blob([dataStr], {type:"application/json"});
-let url = URL.createObjectURL(blob);
-let a = document.createElement("a");
-a.href = url;
-a.download = "library_backup.json";
-a.click();
-URL.revokeObjectURL(url);
-}
-
-function importData(event){
-let file = event.target.files[0];
-if(!file) return;
-let reader = new FileReader();
-reader.onload = function(e){
-try{
-let parsed = JSON.parse(e.target.result);
-if(parsed.books && Array.isArray(parsed.books)){
-books = parsed.books;
-displayBooks();
-updateCount();
-alert("Backup Restored Successfully");
-}else{
-alert("Invalid Backup File");
-}
-}catch{
-alert("Corrupted File");
-}
-};
-reader.readAsText(file);
-}
-
 </script>
+
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 
 const CLIENT_ID = "813786394900-v0362a01ak5hsnq4ohuauk55kll5pu0i.apps.googleusercontent.com";
-
 let accessToken = null;
+
+window.onload = () => {
+  const saved = sessionStorage.getItem("drive_token");
+  if(saved){
+    accessToken = saved;
+    onLoginSuccess();
+  }
+};
 
 function initGoogle(){
   google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
-      alert("Google Connected");
+      sessionStorage.setItem("drive_token", accessToken);
+      onLoginSuccess();
     },
   }).requestAccessToken();
 }
 
-function uploadToDrive(){
-<script>
+async function onLoginSuccess(){
+  document.getElementById("connectBtn").style.display="none";
+  document.getElementById("profileBox").style.display="block";
+  await loadUserProfile();
+  await loadBackups();
+}
 
-async function uploadToDrive(){
+async function loadUserProfile(){
+  const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{
+    headers:{ Authorization:"Bearer "+accessToken }
+  });
+  const user = await res.json();
+  document.getElementById("profileEmail").innerText = user.email;
+}
 
+function toggleProfile(){
+  const pop = document.getElementById("profilePopup");
+  pop.style.display = pop.style.display==="none"?"block":"none";
+}
+
+function logout(){
+  sessionStorage.removeItem("drive_token");
+  location.reload();
+}
+
+async function createBackup(){
   if(!accessToken){
-    alert("Connect Google First");
+    alert("Login First");
     return;
   }
 
-  const fileName = "library_backup.json";
+  const fileName = "library_backup_" + Date.now() + ".json";
 
-  // Step 1: Check if file exists
-  let searchResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'&spaces=drive`,
-    {
-      headers: {
-        Authorization: "Bearer " + accessToken
-      }
-    }
-  );
+  let metadata = { name: fileName, mimeType: "application/json" };
 
-  let searchData = await searchResponse.json();
-
-  let fileContent = new Blob(
+  let file = new Blob(
     [JSON.stringify({books: books}, null, 2)],
     { type: "application/json" }
   );
 
-  if(searchData.files && searchData.files.length > 0){
+  let form = new FormData();
+  form.append("metadata", new Blob([JSON.stringify(metadata)], {type:"application/json"}));
+  form.append("file", file);
 
-    // File exists → Update
-    let fileId = searchData.files[0].id;
+  await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    {
+      method:"POST",
+      headers:{ Authorization:"Bearer "+accessToken },
+      body:form
+    }
+  );
 
-    await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: "Bearer " + accessToken,
-          "Content-Type": "application/json"
-        },
-        body: fileContent
-      }
-    );
-
-    alert("Backup Updated Successfully");
-
-  } else {
-
-    // File doesn't exist → Create new
-    let metadata = {
-      name: fileName,
-      mimeType: "application/json"
-    };
-
-    let form = new FormData();
-    form.append("metadata", new Blob([JSON.stringify(metadata)], {type: "application/json"}));
-    form.append("file", fileContent);
-
-    await fetch(
-      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + accessToken
-        },
-        body: form
-      }
-    );
-
-    alert("Backup Created Successfully");
-  }
+  await loadBackups();
+  alert("Backup Created");
 }
 
-  </script>
+async function loadBackups(){
+
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
+
+  const data = await res.json();
+  const list = document.getElementById("backupList");
+  list.innerHTML="";
+
+  if(!data.files || data.files.length===0){
+    list.innerHTML="<p>No backups yet</p>";
+    return;
+  }
+
+  data.files.forEach(file=>{
+    list.innerHTML+=`
+      <div style="margin:10px 0;padding:12px;background:#f1f1f1;border-radius:15px;">
+        <strong>${file.name}</strong><br>
+        ${new Date(file.createdTime).toLocaleString()}<br>
+        <button onclick="deleteBackup('${file.id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+async function deleteBackup(id){
+
+  if(!confirm("Are you sure you want to delete this backup?")) return;
+
+  await fetch(
+    "https://www.googleapis.com/drive/v3/files/"+id,
+    { method:"DELETE", headers:{ Authorization:"Bearer "+accessToken } }
+  );
+
+  await loadBackups();
+}
+
+</script>
+
 </body>
 </html>
