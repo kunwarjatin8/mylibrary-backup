@@ -63,217 +63,183 @@ nav button.active{color:#e68a7c;}
 </nav>
 
 <script>
-
 let books = [];
 
 function showTab(id,btn){
-document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
-document.getElementById(id).classList.remove('hidden');
-document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function addBook(){
-let book={
-id:Date.now().toString(),
-title:title.value.trim(),
-author:author.value.trim()
-};
+  let book={
+    id:Date.now().toString(),
+    title:title.value.trim(),
+    author:author.value.trim()
+  };
 
-if(!book.title||!book.author){
-alert("Title & Author required");
-return;
+  if(!book.title||!book.author){
+    alert("Title & Author required");
+    return;
+  }
+
+  books.push(book);
+  document.getElementById("totalCount").innerText = books.length;
+  title.value="";
+  author.value="";
+  alert("Book Added");
 }
-
-books.push(book);
-document.getElementById("totalCount").innerText = books.length;
-title.value="";
-author.value="";
-alert("Book Added");
-}
-
 </script>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
-
 const CLIENT_ID = "813786394900-v0362a01ak5hsnq4ohuauk55kll5pu0i.apps.googleusercontent.com";
 
 let accessToken = null;
 let tokenClient;
 
 window.onload = function(){
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+    callback: (tokenResponse) => {
+      accessToken = tokenResponse.access_token;
+      sessionStorage.setItem("drive_token", accessToken);
+      onLoginSuccess();
+    },
+  });
 
-tokenClient = google.accounts.oauth2.initTokenClient({
-  client_id: CLIENT_ID,
-  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
-  callback: (tokenResponse) => {
-    accessToken = tokenResponse.access_token;
-    sessionStorage.setItem("drive_token", accessToken);
+  const saved = sessionStorage.getItem("drive_token");
+  if(saved){
+    accessToken = saved;
     onLoginSuccess();
-  },
-});
-
-const saved = sessionStorage.getItem("drive_token");
-if(saved){
-  accessToken = saved;
-  onLoginSuccess();
-}
-
+  }
 };
 
 function initGoogle(){
-if(!tokenClient){
-alert("Google not ready. Refresh page.");
-return;
-}
-tokenClient.requestAccessToken();
+  if(!tokenClient){
+    alert("Google not ready. Refresh page.");
+    return;
+  }
+  tokenClient.requestAccessToken();
 }
 
 async function onLoginSuccess(){
-document.getElementById("connectBtn").style.display="none";
-document.getElementById("profileBox").style.display="block";
-await loadUserProfile();
-await loadBackups();
+  document.getElementById("connectBtn").style.display="none";
+  document.getElementById("profileBox").style.display="block";
+  await loadUserProfile();
+  await loadBackups();
 }
 
 async function loadUserProfile(){
-const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{
-headers:{ Authorization:"Bearer "+accessToken }
-});
-const user = await res.json();
-document.getElementById("profileEmail").innerText = user.email;
+  const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{
+    headers:{ Authorization:"Bearer "+accessToken }
+  });
+  const user = await res.json();
+  document.getElementById("profileEmail").innerText = user.email;
 }
 
 function toggleProfile(){
-const pop = document.getElementById("profilePopup");
-pop.style.display = pop.style.display==="none"?"block":"none";
+  const pop = document.getElementById("profilePopup");
+  pop.style.display = pop.style.display==="none"?"block":"none";
 }
 
 function logout(){
-sessionStorage.removeItem("drive_token");
-location.reload();
+  sessionStorage.removeItem("drive_token");
+  location.reload();
 }
 
 async function createBackup(){
+  if(!accessToken){
+    alert("Login First");
+    return;
+  }
 
-if(!accessToken){
-alert("Login First");
-return;
-}
+  const fileName = "library_backup_" + Date.now() + ".json";
 
-const fileName = "library_backup_" + Date.now() + ".json";
+  let metadata = { name: fileName, mimeType: "application/json" };
 
-let metadata = { name: fileName, mimeType: "application/json" };
+  let file = new Blob(
+    [JSON.stringify({books: books}, null, 2)],
+    { type: "application/json" }
+  );
 
-let file = new Blob(
-[JSON.stringify({books: books}, null, 2)],
-{ type: "application/json" }
-);
+  let form = new FormData();
+  form.append("metadata", new Blob([JSON.stringify(metadata)], {type:"application/json"}));
+  form.append("file", file);
 
-let form = new FormData();
-form.append("metadata", new Blob([JSON.stringify(metadata)], {type:"application/json"}));
-form.append("file", file);
+  await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    {
+      method:"POST",
+      headers:{ Authorization:"Bearer "+accessToken },
+      body:form
+    }
+  );
 
-await fetch(
-"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-{
-method:"POST",
-headers:{ Authorization:"Bearer "+accessToken },
-body:form
-}
-);
-
-await loadBackups();
-alert("Backup Created");
+  await loadBackups();
+  alert("Backup Created");
 }
 
 async function loadBackups(){
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
 
-const res = await fetch(
-"https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
-{ headers:{ Authorization:"Bearer "+accessToken } }
-);
+  const data = await res.json();
+  const list = document.getElementById("backupList");
+  list.innerHTML="";
 
-const data = await res.json();
-const list = document.getElementById("backupList");
-list.innerHTML="";
+  if(!data.files || data.files.length===0){
+    list.innerHTML="<p>No backups yet</p>";
+    return;
+  }
 
-if(!data.files || data.files.length===0){
-list.innerHTML="<p>No backups yet</p>";
-return;
-}
-
-data.files.forEach(file=>{
-list.innerHTML+=`
-<div style="margin:10px 0;padding:12px;background:#f1f1f1;border-radius:15px;">
-<strong>${file.name}</strong><br>
-${new Date(file.createdTime).toLocaleString()}<br>
-<button onclick="deleteBackup('${file.id}')">Delete</button>
-</div>
-`;
-});
+  data.files.forEach(file=>{
+    list.innerHTML+=`
+    <div style="margin:10px 0;padding:12px;background:#f1f1f1;border-radius:15px;">
+      <strong>${file.name}</strong><br>
+      ${new Date(file.createdTime).toLocaleString()}<br>
+      <button onclick="restoreBackup('${file.id}')">Restore</button>
+      <button onclick="deleteBackup('${file.id}')">Delete</button>
+    </div>
+    `;
+  });
 }
 
 async function deleteBackup(id){
+  if(!confirm("Are you sure you want to delete this backup?")) return;
 
-if(!confirm("Are you sure you want to delete this backup?")) return;
+  await fetch(
+    "https://www.googleapis.com/drive/v3/files/"+id,
+    { method:"DELETE", headers:{ Authorization:"Bearer "+accessToken } }
+  );
 
-await fetch(
-"https://www.googleapis.com/drive/v3/files/"+id,
-{ method:"DELETE", headers:{ Authorization:"Bearer "+accessToken } }
-);
-
-await loadBackups();
+  await loadBackups();
 }
+
 async function restoreBackup(fileId){
+  if(!confirm("This will replace your current library. Continue?")) return;
 
-if(!confirm("This will replace your current library. Continue?")) return;
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
 
-const res = await fetch(
-"https://www.googleapis.com/drive/v3/files/"+fileId+"?alt=media",
-{ headers:{ Authorization:"Bearer "+accessToken } }
-);
+  const data = await res.json();
 
-const data = await res.json();
-
-if(data.books && Array.isArray(data.books)){
-books = data.books;
-document.getElementById("totalCount").innerText = books.length;
-alert("Backup Restored Successfully");
-}else{
-alert("Invalid Backup File");
-}
-
+  if(data.books && Array.isArray(data.books)){
+    books = data.books;
+    document.getElementById("totalCount").innerText = books.length;
+    alert("Backup Restored Successfully");
+  }else{
+    alert("Invalid Backup File");
+  }
 }
 </script>
-async function loadBackups(){
-const res = await fetch(
-"https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
-{ headers:{ Authorization:"Bearer "+accessToken } }
-);
 
-const data = await res.json();
-const list = document.getElementById("backupList");
-list.innerHTML="";
-
-if(!data.files || data.files.length===0){
-list.innerHTML="<p>No backups yet</p>";
-return;
-}
-
-data.files.forEach(file=>{
-list.innerHTML+=`
-<div style="margin:10px 0;padding:12px;background:#f1f1f1;border-radius:15px;">
-<strong>${file.name}</strong><br>
-${new Date(file.createdTime).toLocaleString()}<br>
-<button onclick="restoreBackup('${file.id}')">Restore</button>
-<button onclick="deleteBackup('${file.id}')">Delete</button>
-</div>
-`;
-});
-}
 </body>
 </html>
-
