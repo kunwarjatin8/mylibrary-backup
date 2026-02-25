@@ -87,7 +87,7 @@ nav button.active{color:#e68a7c;}
   </div>
 </div>
 <button onclick="createBackup()">Make a Backup</button>
-
+<button onclick="restoreLatestBackup()">Restore Latest Backup</button>
 <div id="backupList" style="margin-top:15px;"></div>
 
 </div>
@@ -340,6 +340,64 @@ async function restoreBackup(fileId){
     alert("Invalid Backup File");
   }
 }
+  async function restoreLatestBackup(){
+
+  if(!accessToken){
+    alert("Login First");
+    return;
+  }
+
+  if(!confirm("This will replace your current library with the latest backup. Continue?")){
+    return;
+  }
+
+  // Step 1: Find latest backup
+  const search = await fetch(
+    "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=1",
+    {
+      headers:{ Authorization:"Bearer "+accessToken }
+    }
+  );
+
+  const result = await search.json();
+
+  if(!result.files || result.files.length === 0){
+    alert("No backup found in Drive.");
+    return;
+  }
+
+  const latestFile = result.files[0];
+
+  // Step 2: Fetch file content
+  const fileRes = await fetch(
+    "https://www.googleapis.com/drive/v3/files/" + latestFile.id + "?alt=media",
+    {
+      headers:{ Authorization:"Bearer "+accessToken }
+    }
+  );
+
+  const data = await fileRes.json();
+
+  if(data.books && Array.isArray(data.books)){
+    books = data.books;
+
+    // Update UI
+    displayBooks();
+    document.getElementById("totalCount").innerText = books.length;
+
+    // Save locally (if using localStorage)
+    if(currentUserEmail){
+      localStorage.setItem(
+        "library_" + currentUserEmail,
+        JSON.stringify(books)
+      );
+    }
+
+    alert("Latest Backup Restored Successfully");
+  } else {
+    alert("Backup file is invalid.");
+  }
+}
   displayBooks();
 </script>
 <div id="bookModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;">
@@ -355,6 +413,7 @@ async function restoreBackup(fileId){
 </div>
 </body>
 </html>
+
 
 
 
