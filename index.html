@@ -11,9 +11,9 @@ body{background:linear-gradient(135deg,#f4b183,#e68a7c);min-height:100vh;padding
 header{padding:30px 20px 60px;color:white;}
 .card{background:rgba(255,255,255,0.95);margin:-40px 15px 15px;padding:20px;border-radius:25px;box-shadow:0 15px 30px rgba(0,0,0,0.15);}
 input{width:100%;padding:10px;margin:6px 0;border:none;border-radius:12px;background:#f1f1f1;}
-button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:15px;background:#4e8da5;color:white;font-weight:600;cursor:pointer;}
+button{padding:10px 14px;border:none;border-radius:12px;background:#4e8da5;color:white;font-weight:600;cursor:pointer;}
 nav{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);width:90%;background:white;border-radius:30px;display:flex;justify-content:space-around;padding:12px 0;box-shadow:0 10px 25px rgba(0,0,0,0.2);}
-nav button{background:none;color:#333;}
+nav button{background:none;color:#333;width:auto;}
 nav button.active{color:#e68a7c;}
 .hidden{display:none;}
 </style>
@@ -22,83 +22,117 @@ nav button.active{color:#e68a7c;}
 <body>
 
 <header>
-<h1>HI JATIN  :)</h1>
-<p>Your personal Library</p>
+  <h1>HI JATIN :)</h1>
+  <p>Your personal Library</p>
 </header>
 
 <div id="home" class="card">
-<h3>Total Books</h3>
-<p><span id="totalCount">0</span></p>
+  <h3>Total Books</h3>
+  <p><span id="totalCount">0</span></p>
 </div>
 
 <div id="add" class="card hidden">
-<h3>Add Book</h3>
-<!-- ✅ COVER FIRST -->
-<h4>Book Cover</h4>
-<input type="file" id="coverUpload" accept="image/*">
-<img id="coverPreview" style="margin-top:10px;width:120px;border-radius:12px;">
+  <h3>Add Book</h3>
 
-<input type="text" id="title" placeholder="Title">
+  <!-- COVER -->
+  <h4>Book Cover</h4>
+  <input type="file" id="coverUpload" accept="image/*">
+  <img id="coverPreview" style="margin-top:10px;width:120px;border-radius:12px;" alt="Book cover preview">
 
-<input list="authorList" id="author" placeholder="Author">
-<datalist id="authorList"></datalist>
+  <input type="text" id="title" placeholder="Title">
 
-<input type="number" id="pages" placeholder="Pages">
+  <input list="authorList" id="author" placeholder="Author">
+  <datalist id="authorList"></datalist>
 
-<input list="languageList" id="language" placeholder="Language">
-<datalist id="languageList"></datalist>
+  <input type="number" id="pages" placeholder="Pages">
 
-<input list="publisherList" id="publisher" placeholder="Publisher">
-<datalist id="publisherList"></datalist>
+  <input list="languageList" id="language" placeholder="Language">
+  <datalist id="languageList"></datalist>
 
-<select id="seriesOption" onchange="toggleSeries()">
-<option value="No">Is part of series? No</option>
-<option value="Yes">Yes</option>
-</select> <input list="seriesList" id="seriesName" placeholder="Series Name" class="hidden">
-<datalist id="seriesList"></datalist>
+  <input list="publisherList" id="publisher" placeholder="Publisher">
+  <datalist id="publisherList"></datalist>
 
-<h4>Purchase Log</h4>
+  <select id="seriesOption" onchange="toggleSeries()">
+    <option value="No">Is part of series? No</option>
+    <option value="Yes">Yes</option>
+  </select>
+  <input list="seriesList" id="seriesName" placeholder="Series Name" class="hidden">
+  <datalist id="seriesList"></datalist>
 
-<input type="date" id="purchaseDate">
+  <h4>Purchase Log</h4>
 
-<input list="purchaseList" id="purchaseFrom" placeholder="Purchase From">
-<datalist id="purchaseList"></datalist>
+  <input type="date" id="purchaseDate">
 
-<input type="number" id="price" placeholder="Price">
+  <input list="purchaseList" id="purchaseFrom" placeholder="Purchase From">
+  <datalist id="purchaseList"></datalist>
 
-<button onclick="addBook()">Save Book</button>
+  <input type="number" id="price" placeholder="Price">
 
+  <button style="width:100%;margin-top:8px;" onclick="addBook()">Save Book</button>
 </div>
 
 <div id="library" class="card hidden">
-<h3>My Library</h3>
-<div id="bookList"></div>
+  <h3>My Library</h3>
+  <div id="bookList"></div>
 </div>
-  <div id="myzone" class="card hidden">
-<h3>My Zone</h3>
 
-<button id="connectBtn" onclick="initGoogle()">Connect Google</button>
+<div id="myzone" class="card hidden">
+  <h2 style="font-size:22px;margin-bottom:10px;">Backup and Restore</h2>
 
-<div id="profileBox" style="display:none;margin-top:10px;">
-  <button onclick="toggleProfile()">My Profile</button>
-  <div id="profilePopup" style="display:none;background:#f1f1f1;padding:10px;border-radius:10px;margin-top:5px;">
-    <p id="profileEmail"></p>
-    <button onclick="logout()">Logout</button>
+  <!-- CONNECT BUTTON / PROFILE BOX WRAPPER -->
+  <div id="profileBox">
+    <button id="connectBtn" onclick="initGoogle()" style="margin-bottom:15px;width:100%;">
+      Connect Google
+    </button>
+
+    <!-- PROFILE INFO (HIDDEN UNTIL LOGIN) -->
+    <div id="profilePopup" style="display:none;margin-bottom:15px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+        <div>
+          <div id="profileEmail" style="font-weight:600;"></div>
+          <div onclick="logout()" style="color:#4e8da5;cursor:pointer;font-size:14px;margin-top:4px;">
+            Log out
+          </div>
+        </div>
+        <img id="profilePic" style="width:60px;height:60px;border-radius:50%;object-fit:cover;" alt="Profile picture">
+      </div>
+
+      <!-- DRIVE STORAGE -->
+      <div style="margin-bottom:20px;">
+        <div style="height:6px;background:#eee;border-radius:10px;overflow:hidden;">
+          <div id="driveUsageBar" style="height:100%;width:0%;background:#e68a7c;"></div>
+        </div>
+        <p id="driveUsageText" style="font-size:13px;margin-top:6px;color:#555;"></p>
+      </div>
+    </div>
   </div>
-</div>
-<button onclick="createBackup()">Make a Backup</button>
-<button onclick="restoreLatestBackup()">Restore Latest Backup</button>
-<div id="backupList" style="margin-top:15px;"></div>
 
+  <p style="color:#777;margin-bottom:20px;">Securely back up to the cloud.</p>
+
+  <!-- MAKE BACKUP -->
+  <div onclick="createBackup()" 
+       style="background:#f4b183;padding:15px;border-radius:15px;color:white;font-weight:600;text-align:center;cursor:pointer;margin-bottom:15px;">
+    Make a Backup
+  </div>
+
+  <!-- RESTORE LATEST -->
+  <div onclick="restoreLatestBackup()" 
+       style="background:#4e8da5;padding:15px;border-radius:15px;color:white;font-weight:600;text-align:center;cursor:pointer;margin-bottom:15px;">
+    Restore Latest Backup
+  </div>
+
+  <!-- BACKUP LIST -->
+  <div id="backupList" style="margin-top:15px;"></div>
 </div>
+
 <nav>
-<button onclick="showTab('home',this)" class="active">Home</button>
-<button onclick="showTab('add',this)">Add Books</button>
-<button onclick="showTab('library',this)">Library</button>
-<button onclick="showTab('myzone',this)">My Zone</button>
+  <button onclick="showTab('home',this)" class="active">Home</button>
+  <button onclick="showTab('add',this)">Add Books</button>
+  <button onclick="showTab('library',this)">Library</button>
+  <button onclick="showTab('myzone',this)">My Zone</button>
 </nav>
-<script>
 
+<script>
 let books = [];
 let currentBookId = null;
 
@@ -110,26 +144,29 @@ function showTab(id,btn){
 }
 
 function displayBooks(){
-  let list = document.getElementById("bookList");
+  const list = document.getElementById("bookList");
   if(!list) return;
 
   list.innerHTML = "";
 
   books.forEach(function(b){
     list.innerHTML += 
-      "<div onclick=\"openBook('" + b.id + "')\" " +
-      "style=\"margin:10px 0;padding:10px;background:white;border-radius:15px;cursor:pointer;\">" +
-      "<strong>" + b.title + "</strong><br>" +
-      b.author +
-      "</div>";
+'<div onclick="openBook(\'' + b.id + '\')" ' +
+'style="margin:10px 0;padding:10px;background:white;border-radius:15px;cursor:pointer;">' +
+'<strong>' + b.title + '</strong><br>' +
+(b.author || "") +
+'</div>';
   });
 }
 
 function addBook(){
+  const titleInput = document.getElementById("title");
+  const authorInput = document.getElementById("author");
+
   let book = {
     id: Date.now().toString(),
-    title: title.value.trim(),
-    author: author.value.trim()
+    title: titleInput.value.trim(),
+    author: authorInput.value.trim()
   };
 
   if(!book.title || !book.author){
@@ -139,11 +176,10 @@ function addBook(){
 
   books.push(book);
   displayBooks();
-
   document.getElementById("totalCount").innerText = books.length;
 
-  title.value = "";
-  author.value = "";
+  titleInput.value = "";
+  authorInput.value = "";
 
   alert("Book Added");
 }
@@ -182,15 +218,24 @@ function editBook(){
 
   if(!book) return;
 
-  title.value = book.title;
-  author.value = book.author;
+  document.getElementById("title").value = book.title;
+  document.getElementById("author").value = book.author;
 
   closeModal();
   showTab('add', document.querySelectorAll('nav button')[1]);
 }
 
-displayBooks();
+function toggleSeries(){
+  const opt = document.getElementById("seriesOption").value;
+  const sName = document.getElementById("seriesName");
+  if(opt === "Yes"){
+    sName.classList.remove("hidden");
+  } else {
+    sName.classList.add("hidden");
+  }
+}
 
+displayBooks();
 </script>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -199,12 +244,13 @@ displayBooks();
 const CLIENT_ID = "813786394900-v0362a01ak5hsnq4ohuauk55kll5pu0i.apps.googleusercontent.com";
 
 let accessToken = null;
+let currentUserEmail = null;
 let tokenClient;
 
 window.onload = function(){
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email',
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     callback: (tokenResponse) => {
       accessToken = tokenResponse.access_token;
       sessionStorage.setItem("drive_token", accessToken);
@@ -229,22 +275,52 @@ function initGoogle(){
 
 async function onLoginSuccess(){
   document.getElementById("connectBtn").style.display="none";
-  document.getElementById("profileBox").style.display="block";
+  document.getElementById("profilePopup").style.display="block";
   await loadUserProfile();
   await loadBackups();
+  await loadDriveUsage();
 }
 
 async function loadUserProfile(){
-  const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo",{
-    headers:{ Authorization:"Bearer "+accessToken }
-  });
+  const res = await fetch(
+    "https://www.googleapis.com/oauth2/v2/userinfo",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
+
   const user = await res.json();
+
   document.getElementById("profileEmail").innerText = user.email;
+  currentUserEmail = user.email;
+
+  if(user.picture){
+    document.getElementById("profilePic").src = user.picture;
+  }
+}
+
+async function loadDriveUsage(){
+  const res = await fetch(
+    "https://www.googleapis.com/drive/v3/about?fields=storageQuota",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
+
+  const data = await res.json();
+
+  const used = Number(data.storageQuota.usage);
+  const total = Number(data.storageQuota.limit);
+
+  const usedMB = (used/1024/1024).toFixed(2);
+  const totalGB = (total/1024/1024/1024).toFixed(2);
+
+  const percent = (used/total)*100;
+
+  document.getElementById("driveUsageBar").style.width = percent + "%";
+  document.getElementById("driveUsageText").innerText =
+    usedMB + " MB / " + totalGB + " GB";
 }
 
 function toggleProfile(){
   const pop = document.getElementById("profilePopup");
-  pop.style.display = pop.style.display==="none"?"block":"none";
+  pop.style.display = (pop.style.display==="none" || pop.style.display==="") ? "block" : "none";
 }
 
 function logout(){
@@ -256,6 +332,26 @@ async function createBackup(){
   if(!accessToken){
     alert("Login First");
     return;
+  }
+
+  document.getElementById("loaderText").innerText = "Creating Backup!! Be Patience ....";
+  document.getElementById("loaderModal").style.display = "flex";
+
+  // delete all old backups first
+  const old = await fetch(
+    "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name)",
+    { headers:{ Authorization:"Bearer "+accessToken } }
+  );
+
+  const oldData = await old.json();
+
+  if(oldData.files){
+    for(const f of oldData.files){
+      await fetch(
+        "https://www.googleapis.com/drive/v3/files/"+f.id,
+        { method:"DELETE", headers:{ Authorization:"Bearer "+accessToken } }
+      );
+    }
   }
 
   const fileName = "library_backup_" + Date.now() + ".json";
@@ -281,10 +377,16 @@ async function createBackup(){
   );
 
   await loadBackups();
-  alert("Backup Created");
+  document.getElementById("loaderText").innerText = "Backup Created Successfully!";
+
+  setTimeout(()=>{
+    document.getElementById("loaderModal").style.display = "none";
+  },1500);
 }
 
 async function loadBackups(){
+  if(!accessToken) return;
+
   const res = await fetch(
     "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc",
     { headers:{ Authorization:"Bearer "+accessToken } }
@@ -323,6 +425,11 @@ async function deleteBackup(id){
 }
 
 async function restoreBackup(fileId){
+  if(!accessToken){
+    alert("Login First");
+    return;
+  }
+
   if(!confirm("This will replace your current library. Continue?")) return;
 
   const res = await fetch(
@@ -334,14 +441,22 @@ async function restoreBackup(fileId){
 
   if(data.books && Array.isArray(data.books)){
     books = data.books;
+    displayBooks();
     document.getElementById("totalCount").innerText = books.length;
     alert("Backup Restored Successfully");
+
+    if(currentUserEmail){
+      localStorage.setItem(
+        "library_" + currentUserEmail,
+        JSON.stringify(books)
+      );
+    }
   }else{
     alert("Invalid Backup File");
   }
 }
-  async function restoreLatestBackup(){
 
+async function restoreLatestBackup(){
   if(!accessToken){
     alert("Login First");
     return;
@@ -351,7 +466,11 @@ async function restoreBackup(fileId){
     return;
   }
 
-  // Step 1: Find latest backup
+  document.getElementById("loaderText").innerText =
+    "Restoring... Please wait";
+
+  document.getElementById("loaderModal").style.display = "flex";
+
   const search = await fetch(
     "https://www.googleapis.com/drive/v3/files?q=name contains 'library_backup_'&fields=files(id,name,createdTime)&orderBy=createdTime desc&pageSize=1",
     {
@@ -362,13 +481,13 @@ async function restoreBackup(fileId){
   const result = await search.json();
 
   if(!result.files || result.files.length === 0){
+    document.getElementById("loaderModal").style.display="none";
     alert("No backup found in Drive.");
     return;
   }
 
   const latestFile = result.files[0];
 
-  // Step 2: Fetch file content
   const fileRes = await fetch(
     "https://www.googleapis.com/drive/v3/files/" + latestFile.id + "?alt=media",
     {
@@ -381,11 +500,15 @@ async function restoreBackup(fileId){
   if(data.books && Array.isArray(data.books)){
     books = data.books;
 
-    // Update UI
     displayBooks();
     document.getElementById("totalCount").innerText = books.length;
+    document.getElementById("loaderText").innerText =
+      "YAAH!! Restoration Complete! Enjoy your books 📚";
 
-    // Save locally (if using localStorage)
+    setTimeout(()=>{
+      document.getElementById("loaderModal").style.display = "none";
+    },2000);
+
     if(currentUserEmail){
       localStorage.setItem(
         "library_" + currentUserEmail,
@@ -395,26 +518,32 @@ async function restoreBackup(fileId){
 
     alert("Latest Backup Restored Successfully");
   } else {
+    document.getElementById("loaderModal").style.display = "none";
     alert("Backup file is invalid.");
   }
 }
-  displayBooks();
 </script>
+
+<!-- BOOK MODAL -->
 <div id="bookModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;">
-<div style="background:white;padding:20px;border-radius:15px;width:90%;max-width:400px;">
-<h3 id="modalTitle"></h3>
-<p id="modalAuthor"></p>
-<div style="display:flex;justify-content:space-between;margin-top:15px;">
-<button onclick="editBook()">Modify</button>
-<button onclick="deleteBook()">Delete</button>
+  <div style="background:white;padding:20px;border-radius:15px;width:90%;max-width:400px;">
+    <h3 id="modalTitle"></h3>
+    <p id="modalAuthor"></p>
+    <div style="display:flex;justify-content:space-between;margin-top:15px;">
+      <button onclick="editBook()">Modify</button>
+      <button onclick="deleteBook()">Delete</button>
+    </div>
+    <button style="margin-top:10px;" onclick="closeModal()">Close</button>
+  </div>
 </div>
-<button onclick="closeModal()">Close</button>
+
+<!-- LOADER MODAL -->
+<div id="loaderModal"
+     style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+     background:rgba(0,0,0,0.5);justify-content:center;align-items:center;
+     color:white;font-size:18px;z-index:9999;">
+  <div id="loaderText">Processing...</div>
 </div>
-</div>
+
 </body>
 </html>
-
-
-
-
-
